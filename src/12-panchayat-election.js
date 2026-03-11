@@ -44,7 +44,7 @@
  *   3. countVotesInRegions(regionTree)
  *      - RECURSION: count total votes in nested region structure
  *      - regionTree: { name, votes: number, subRegions: [...] }
- *      - Sum votes from this region + all subRegions (recursively)
+ *      - Sum votes from this region + all   subRegions (recursively)
  *      - Agar regionTree null/invalid, return 0
  *
  *   4. tallyPure(currentTally, candidateId)
@@ -64,17 +64,126 @@
  *   // => "voted!"
  */
 export function createElection(candidates) {
-  // Your code here
+
+   const votes = {};
+   const registeredVoters= new Set();
+   const votedVoters = new Set();
+     
+    for (let candidate of candidates) {
+    votes[candidate.id] = 0;
+  }
+  function registerVoter(voter) {
+    if (
+      !voter ||
+      typeof voter.id === "undefined" ||
+      voter.age < 18 ||
+      registeredVoters.has(voter.id)
+    ) {
+      return false;
+    }
+    registeredVoters.add(voter.id);
+    return true;
+  }
+
+  function castVote(voterId, candidateId, onSuccess, onError){
+
+    if(!registeredVoters.has(voterId)){
+      return ("Voter has not registered");
+    }
+    if(!(candidateId in votes)){
+      return ("Cnadidate does not exist");
+    }
+    if(votedVoters.has(voterId)){
+      return onError("Voter has already voted");
+    }
+
+    votes[candidateId]++;
+    votedVoters.add(voterId);
+    return onSuccess({ voterId, candidateId });
+  }
+ 
+   function getResults(sortFn) {
+    const results = candidates.map(c => ({
+      id: c.id,
+      name: c.name,
+      party: c.party,
+      votes: votes[c.id]
+    }));
+    
+    if (sortFn) {
+      results.sort(sortFn);
+    } else {
+      results.sort((a, b) => b.votes - a.votes);
+    }
+
+    return results;
+  }
+  function getWinner() {
+    let maxVotes = 0;
+    let winner = null;
+
+    for (let candidate of candidates) {
+      const candidateVotes = votes[candidate.id];
+
+      if (candidateVotes > maxVotes) {
+        maxVotes = candidateVotes;
+        winner = candidate;
+      }
+    }
+
+    if (maxVotes === 0) return null;
+    return winner;
+  }
+  return {
+    registerVoter,
+    castVote,
+    getResults,
+    getWinner
+  };
 }
 
 export function createVoteValidator(rules) {
-  // Your code here
+   return function(voter){
+
+       if (!voter || typeof voter !== "object") {
+      return { valid: false, reason: "Invalid voter object" };
+    }
+
+    for (let field of rules.requiredFields) {
+      if (!(field in voter)) {
+        return { valid: false, reason: `${field} is required` };
+      }
+    }
+    if (voter.age < rules.minAge) {
+      return { valid: false, reason: "Voter under minimum age" };
+    }
+    return { valid: true, reason: "Valid voter" };
+  };
 }
 
 export function countVotesInRegions(regionTree) {
-  // Your code here
+  
+  if (!regionTree || typeof regionTree !== "object") {
+    return 0;
+  }
+
+  let total = regionTree.votes || 0;
+  if (Array.isArray(regionTree.subRegions)) {
+    for (let sub of regionTree.subRegions) {
+      total += countVotesInRegions(sub);
+    }
+  }
+  return total;
 }
 
 export function tallyPure(currentTally, candidateId) {
-  // Your code here
+
+  const newTally = { ...currentTally };
+
+  if (newTally[candidateId]) {
+    newTally[candidateId] += 1;
+  } else {
+    newTally[candidateId] = 1;
+  }
+  return newTally;
 }

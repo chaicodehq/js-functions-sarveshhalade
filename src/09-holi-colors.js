@@ -1,3 +1,5 @@
+
+
 /**
  * 🎨 Holi Color Mixer - Pure Functions
  *
@@ -54,21 +56,91 @@
  *   // red and blue objects are UNCHANGED
  */
 export function mixColors(color1, color2) {
-  // Your code here
+  if(!isValidColor(color1) || !isValidColor(color2)){
+    return null;
+  }
+
+  return{
+    name: `${color1.name}-${color2.name}`,
+    r: Math.round((color1.r + color2.r) / 2),
+    g: Math.round((color1.g + color2.g) / 2),
+    b: Math.round((color1.b + color2.b) / 2),
+  };
+
+  function isValidColor(color){
+    return(
+    color &&
+    typeof color.name === "string" &&
+    typeof color.r === "number" && typeof color.g === "number" && typeof color.b === "number" &&
+    color.r >= 0 && color.r <= 255 &&
+    color.g >= 0 && color.g <= 255 &&
+    color.b >= 0 && color.b <= 255
+    );
+  }
 }
 
 export function adjustBrightness(color, factor) {
-  // Your code here
+  
+  if( !isValidColor(color) || typeof factor !== "number"){
+    return null;
+  }
+
+  const clamp = (value) => Math.min(255, Math.max(0, Math.round(value)));
+  return{
+    name: color.name,
+    r: clamp(color.r * factor),
+    g: clamp(color.g * factor),
+    b: clamp(color.b * factor)
+  };
+
+  function isValidColor(color) {
+  return (
+    color &&
+    typeof color.name === "string" &&
+    typeof color.r === "number" &&
+    typeof color.g === "number" &&
+    typeof color.b === "number"
+  );
+}
 }
 
 export function addToPalette(palette, color) {
-  // Your code here
+  
+  const isValidColor = (color) => 
+    color &&
+     typeof color.name === "string" &&
+    typeof color.r === "number" && typeof color.g === "number" && typeof color.b === "number" &&
+    color.r >= 0 && color.r <= 255 &&
+    color.g >= 0 && color.g <= 255 &&
+    color.b >= 0 && color.b <= 255;
+
+  if(!Array.isArray(palette)){
+   return isValidColor(color) ? [color] : [];
+  }
+  if(!isValidColor(color)){
+    return [...palette];
+  }
+  return [...palette, color];
 }
 
 export function removeFromPalette(palette, colorName) {
-  // Your code here
+  if(!Array.isArray(palette)){
+    return [];
+  }
+
+  return palette.filter(color => color.name !== colorName);
 }
 
 export function mergePalettes(palette1, palette2) {
-  // Your code here
+  const p1 = Array.isArray(palette1) ? palette1 : [];
+  const p2 = Array.isArray(palette2) ? palette2 : [];
+
+  const combined = [...p1, ...p2];
+  const seen = new Set();
+
+  return combined.filter(color =>{
+    if(seen.has(color.name)) return false;
+    seen.add(color.name);
+    return true;
+  });
 }
